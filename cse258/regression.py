@@ -1,6 +1,5 @@
 import numpy as np
 from urllib.request import urlopen
-import scipy.optimize
 
 
 def parseDataURL(fname):
@@ -17,7 +16,6 @@ def parseData(fname):
 print("Task 1")
 print("start reading data")
 data = list(parseData('data/fantasy_10000.json'))
-# data = list(parseData(r"https://cseweb.ucsd.edu/classes/fa21/cse258-b/data/fantasy_10000.json"))
 print("review data have already been loaded")
 
 ndatax = [len(d['review_text']) for d in data]
@@ -70,8 +68,8 @@ print(get_onehot(np.array(duparser.parse(data[0]['date_added']).weekday() - 1), 
 print(get_onehot(np.array(duparser.parse(data[1]['date_added']).weekday() - 1), 7),
       get_onehot(np.array(duparser.parse(data[1]['date_added']).year - 2006), 12))
 
-print("Task 3")
 
+# Task 3
 # directly
 X = [[1, len(d['review_text']), duparser.parse(d['date_added']).weekday(), duparser.parse(d['date_added']).year] for d
      in data]
@@ -88,7 +86,7 @@ theta, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
 print('Coefficient: ', theta)
 print('MSE: ', mse_calc(X, y, theta))
 
-print("Task 4")
+# Task 4
 import random
 
 
@@ -104,7 +102,7 @@ X = [[1, len(d['review_text']), duparser.parse(d['date_added']).weekday(), dupar
      in data]
 y = [d['rating'] for d in data]
 x_training, x_testing, y_training, y_testing = split_dataset(X, y)
-theta, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
+theta, residuals, rank, s = np.linalg.lstsq(x_training, y_training, rcond=None)
 print('Coefficient: ', theta)
 print('MSE on training: ', mse_calc(x_training, y_training, theta))
 print('MSE on testing: ', mse_calc(x_testing, y_testing, theta))
@@ -114,7 +112,7 @@ X = [[1, len(d['review_text'])] + get_onehot(np.array(duparser.parse(d['date_add
      get_onehot(np.array(duparser.parse(d['date_added']).year - 2006), 12) for d in data]
 y = [d['rating'] for d in data]
 x_training, x_testing, y_training, y_testing = split_dataset(X, y)
-theta, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
+theta, residuals, rank, s = np.linalg.lstsq(x_training, y_training, rcond=None)
 print('Coefficient: ', theta)
 print('MSE on training: ', mse_calc(x_training, y_training, theta))
 print('MSE on testing: ', mse_calc(x_testing, y_testing, theta))
