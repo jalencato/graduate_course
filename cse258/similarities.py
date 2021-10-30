@@ -23,7 +23,7 @@ for d in dataset:
     user, item = d['user_id'], d['book_id']
     usersPerItem[item].add(user)
     itemsPerUser[user].add(item)
-    ratingDict[(user, item)] = d['n_votes']
+    ratingDict[(user, item)] = d['rating']
 
 
 def Jaccard(s1, s2):
@@ -46,7 +46,7 @@ def mostSimilaries(i, top=10):
     return similarities[:top]
 
 
-print(mostSimilaries(dataset[0]['book_id']))
+# print(mostSimilaries(dataset[0]['book_id']))
 
 
 # Task 2
@@ -63,7 +63,7 @@ for i in itemsPerUser[target_user]:
 # strange to say the item of target user has only 1 item.
 
 
-print(mostSimilaries(target_id))
+# print(mostSimilaries(target_id))
 
 
 # b
@@ -74,8 +74,8 @@ def mostSimilaries_user(i, top=10):
     for i2 in itemsPerUser:
         if i2 == i: continue
         sim = Jaccard(items, itemsPerUser[i2])
-        if not itemsPerUser[i2].issubset(items):
-            similarities.append((sim, i2))
+        # if not itemsPerUser[i2].issubset(items):
+        similarities.append((sim, i2))
     similarities.sort(reverse=True)
     return similarities[:top]
 
@@ -83,14 +83,17 @@ def mostSimilaries_user(i, top=10):
 recommend_user = mostSimilaries_user(target_user)
 print(recommend_user)
 recommend_user = [k[1] for k in recommend_user]
-print(recommend_user)
+# print(recommend_user)
 
 recommend = set()
 for user in recommend_user:
     for i in itemsPerUser[user]:
-        if ratingDict[(user, i)] >= maxinf:
+        if ratingDict[(user, i)] > maxinf:
             maxinf = ratingDict[(user, i)]
             target_id = i
+        elif ratingDict[(user, i)] == maxinf:
+            if target_id > i:
+                target_id = i
     recommend.add(target_id)
 print(recommend)
 
@@ -106,8 +109,8 @@ for u in itemsPerUser:
 for i in usersPerItem:
     rs = [ratingDict[(u, i)] for u in usersPerItem[i]]
     itemAverages[i] = sum(rs) / len(rs)
-
-
+#
+#
 def Pearson_1(i1, i2):
     iBar1, iBar2 = itemAverages[i1], itemAverages[i2]
     inter = usersPerItem[i1].intersection(usersPerItem[i2])
@@ -153,5 +156,5 @@ def mostSimilaries_Pearson(i, top=10, mode=1):
     return similarities[:top]
 
 
-print(mostSimilaries_Pearson(dataset[0]['book_id'], 10, 1))
-print(mostSimilaries_Pearson(dataset[0]['book_id'], 10, 2))
+# print(mostSimilaries_Pearson(dataset[0]['book_id'], 10, 1))
+# print(mostSimilaries_Pearson(dataset[0]['book_id'], 10, 2))

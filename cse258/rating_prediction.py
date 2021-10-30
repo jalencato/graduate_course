@@ -15,9 +15,6 @@ count = 0
 
 for line in f:
     data = json.loads(line)
-    # count += 1
-    # if count >= 3:
-    #     break
     data['rating'] = int(data['rating'])
     data['n_votes'] = int(data['n_votes'])
     data['n_comments'] = int(data['n_comments'])
@@ -29,14 +26,15 @@ for line in f:
         data['date_updated'][2] += 1.0/24
     dataset.append(data)
 
-dataset, _ = train_test_split(dataset, train_size=10000, random_state=42)
+split_dataset, _ = train_test_split(dataset, train_size=10000, random_state=42)
+split_dataset = dataset
 #Task 4
 usersPerItem = defaultdict(set)
 itemsPerUser = defaultdict(set)
 ratingDict, time_reviewed = {}, {}
 
 minyear = 123123
-for d in dataset:
+for d in split_dataset:
     user, item = d['user_id'], d['book_id']
     usersPerItem[item].add(user)
     itemsPerUser[user].add(item)
@@ -63,12 +61,12 @@ for i in usersPerItem:
 reviewsPerUser = defaultdict(list)
 reviewsPerItem = defaultdict(list)
 
-for d in dataset:
+for d in split_dataset:
     user, item = d['user_id'], d['book_id']
     reviewsPerUser[user].append(d)
     reviewsPerItem[item].append(d)
 
-ratingMean = sum([d['rating'] for d in dataset]) / len(dataset)
+ratingMean = sum([d['rating'] for d in split_dataset]) / len(split_dataset)
 
 
 def Jaccard(s1, s2):
@@ -92,7 +90,8 @@ def predictRating(user, item):
         return itemAverages[item] + sum(weightedRatings) / sum(similarities)
     else:
         # User hasn't rated any similar items
-        return ratingMean
+        # print("error")
+        return sum([d['rating'] for d in split_dataset if d['book_id'] == item]) / len([d['rating'] for d in split_dataset if d['book_id'] == item])
 
 
 def MSE(predictions, labels):
@@ -100,7 +99,7 @@ def MSE(predictions, labels):
     return sum(differences) / len(differences)
 
 
-simPredictions = [predictRating(d['user_id'], d['book_id']) for d in dataset]
+simPredictions = [predictRating(d['user_id'], d['book_id']) for d in split_dataset]
 labels = [d['rating'] for d in dataset]
 print(MSE(simPredictions, labels))
 
@@ -127,9 +126,10 @@ def predictRating_time(user, item):
         return itemAverages[item] + sum(weightedRatings) / sum(similarities)
     else:
         # User hasn't rated any similar items
-        return ratingMean
+        return sum([d['rating'] for d in split_dataset if d['book_id'] == item]) / len([d['rating'] for d in split_dataset if d['book_id'] == item])
 
 
-simPredictions_time = [predictRating_time(d['user_id'], d['book_id']) for d in dataset]
-labels = [d['rating'] for d in dataset]
+simPredictions_time = [predictRating_time(d['user_id'], d['book_id']) for d in split_dataset]
+# labels = [d['rating'] for d in dataset]
+print("end")
 print(MSE(simPredictions_time, labels))
