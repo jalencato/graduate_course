@@ -9,6 +9,7 @@ from tqdm import tqdm
 import random
 import matplotlib.pyplot as plt
 
+
 def splitDataset(datapath):
     f = gzip.open(datapath, 'rt')
     data = pd.read_csv(f)
@@ -30,11 +31,10 @@ def sampleNegative(data, train, valid):
             userRecipe[row['user_id']] = {row['recipe_id']}
         else:
             userRecipe[row['user_id']].add(row['recipe_id'])
-        # userRecipe[row['user_id']].append(row['recipe_id'])
 
     print("confirm loading training data")
     for index, row in tqdm(valid.iterrows()):
-        negValidRecipe = random.sample(set(data['recipe_id']) - userRecipe[row['user_id']], 1)[0]
+        negValidRecipe = random.sample(set(data['recipe_id']).difference(userRecipe[row['user_id']]), 1)[0]
         NegValid = NegValid.append({'user_id': row['user_id'], 'recipe_id': negValidRecipe, 'date': 0, 'rating': -1},
                                    ignore_index=True)
 
@@ -110,7 +110,9 @@ def baselineOnValidationThreshold():
     plt.show()
     print('Evaluating ...')
 
+
 baselineOnValidationThreshold()
+
 
 #Task 3
 def Jaccard(s1, s2):
