@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 def splitDataset(datapath):
     f = gzip.open(datapath, 'rt')
     data = pd.read_csv(f)
-    train, valid = data[:400000], data[400001:]
-    # train, valid = data[:4], data[5:9]
+    # train, valid = data[:400000], data[400001:]
+    train, valid = data[:4], data[5:9]
     return data, train, valid
 
 
@@ -42,7 +42,11 @@ def sampleNegative(data, train, valid):
 
 
 print("Sampling negative examples")
-valid, _ = sampleNegative(data, train, valid)
+# valid, _ = sampleNegative(data, train, valid)
+# print("start valid csv loading")
+# data_df = pd.DataFrame(valid)
+# data_df.to_csv("valid.csv")
+pd.read_csv("valid.csv")
 print('Training ...')
 recipeCount = defaultdict(int)
 totalCooked = 0
@@ -121,16 +125,18 @@ def Jaccard(s1, s2):
     return numer / denom
 
 
-userRecipe, recipeUser = {}, {}
+userRecipe, recipeUser = defaultdict(list), defaultdict(list)
 for index, row in tqdm(train.iterrows()):
-    if row['user_id'] not in userRecipe:
-        userRecipe[row['user_id']] = {row['recipe_id']}
-    else:
-        userRecipe[row['user_id']].add(row['recipe_id'])
-    if row['recipe_id'] not in recipeUser:
-        recipeUser[row['recipe_id']] = {row['user_id']}
-    else:
-        recipeUser[row['recipe_id']].add(row['user_id'])
+    userRecipe[row['user_id']].append(row['recipe_id'])
+    recipeUser[row['recipe_id']].append(row['user_id'])
+    # if row['user_id'] not in userRecipe:
+    #     userRecipe[row['user_id']] = {row['recipe_id']}
+    # else:
+    #     userRecipe[row['user_id']].add(row['recipe_id'])
+    # if row['recipe_id'] not in recipeUser:
+    #     recipeUser[row['recipe_id']] = {row['user_id']}
+    # else:
+    #     recipeUser[row['recipe_id']].add(row['user_id'])
 
 
 thresholds = [1 / 2 ** i for i in range(1, 20)]
@@ -140,6 +146,8 @@ for threshold in thresholds:
     correct = 0
     for index, row in tqdm(valid.iterrows()):
         userR = userRecipe[row['user_id']]
+        if not userR:
+            continue
         jac = []
         m = -1
         for recipe in userR:
@@ -147,7 +155,6 @@ for threshold in thresholds:
                 m = max(0, m)
             else:
                 m = max(Jaccard(recipeUser[row['recipe_id']], recipeUser[recipe]), m)
-                # jac.append(Jaccard(recipeUser[row['recipe_id']], recipeUser[recipe]))
 
         if m > threshold:
             correct += (row['date'] != 0)
