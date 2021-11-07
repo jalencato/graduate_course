@@ -17,39 +17,39 @@ def readCSV(path):
 
 ### Rating baseline: compute averages for each user, or return the global average if we've never seen the user before
 
-allRatings = []
-userRatings = defaultdict(list)
-
-for user,recipe,d in readCSV("data/trainInteractions.csv.gz"):
-    r = int(d['rating'])
-    allRatings.append(r)
-    userRatings[user].append(r)
-
-globalAverage = sum(allRatings) / len(allRatings)
-userAverage = {}
-for u in userRatings:
-    userAverage[u] = sum(userRatings[u]) / len(userRatings[u])
-
-predictions = open("data/predictions_Rated.txt", 'w')
-for l in open("data/stub_Rated.txt"):
-    if l.startswith("user_id"):
-        #header
-        predictions.write(l)
-        continue
-    u,i = l.strip().split('-')
-    if u in userAverage:
-        predictions.write(u + '-' + i + ',' + str(userAverage[u]) + '\n')
-    else:
-        predictions.write(u + '-' + i + ',' + str(globalAverage) + '\n')
-
-predictions.close()
+# allRatings = []
+# userRatings = defaultdict(list)
+#
+# for user,recipe,d in readCSV("data/trainInteractions.csv.gz"):
+#     r = int(d['rating'])
+#     allRatings.append(r)
+#     userRatings[user].append(r)
+#
+# globalAverage = sum(allRatings) / len(allRatings)
+# userAverage = {}
+# for u in userRatings:
+#     userAverage[u] = sum(userRatings[u]) / len(userRatings[u])
+#
+# predictions = open("data/predictions_Rated.txt", 'w')
+# for l in open("data/stub_Rated.txt"):
+#     if l.startswith("user_id"):
+#         #header
+#         predictions.write(l)
+#         continue
+#     u,i = l.strip().split('-')
+#     if u in userAverage:
+#         predictions.write(u + '-' + i + ',' + str(userAverage[u]) + '\n')
+#     else:
+#         predictions.write(u + '-' + i + ',' + str(globalAverage) + '\n')
+#
+# predictions.close()
 
 ### Would-cook baseline: just rank which recipes are popular and which are not, and return '1' if a recipe is among the top-ranked
 
 recipeCount = defaultdict(int)
 totalCooked = 0
 
-for user,recipe,_ in readCSV("data/trainInteractions.csv.gz"):
+for user, recipe, _ in readCSV("data/trainInteractions.csv.gz"):
     recipeCount[recipe] += 1
     totalCooked += 1
 
@@ -70,7 +70,7 @@ for l in open("data/stub_Made.txt"):
         #header
         predictions.write(l)
         continue
-    u,i = l.strip().split('-')
+    u, i = l.strip().split('-')
     if i in return1:
         predictions.write(u + '-' + i + ",1\n")
     else:

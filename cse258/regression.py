@@ -97,7 +97,7 @@ def split_dataset(X, y, percent=0.5):
     return a[int(len(a) * percent):], a[:int(len(X) * percent)], b[int(len(y) * percent):], b[:int(len(y) * percent)]
 
 
-# direcly
+# directly
 X = [[1, len(d['review_text']), duparser.parse(d['date_added']).weekday(), duparser.parse(d['date_added']).year] for d
      in data]
 y = [d['rating'] for d in data]
