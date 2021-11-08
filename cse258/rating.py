@@ -149,39 +149,37 @@ labels = [row['rating'] for index, row in tqdm(train.iterrows())]
 # print(MSE(alwaysPredictMeanTrain, labels))
 # 0.8987313599958769
 
-scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, 1))
+# scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, 1))
+#
+# predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
+#
+# labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
+#
+# print(MSE(predictions, labelsValid))
+#
+# print("max user: %s , max value: %f" % (max(userBiases, key=userBiases.get), max(userBiases.values())))
+# print("max recipe: %s , max value: %f" % (max(itemBiases, key=itemBiases.get), max(itemBiases.values())))
+# print("min user: %s , min value: %f" % (min(userBiases, key=userBiases.get), min(userBiases.values())))
+# print("min recipe: %s , min value: %f" % (min(itemBiases, key=itemBiases.get), min(itemBiases.values())))
 
-predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
-
-labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
-
-print(MSE(predictions, labelsValid))
-
-print("max user: %s , max value: %f" % (max(userBiases, key=userBiases.get), max(userBiases.values())))
-print("max recipe: %s , max value: %f" % (max(itemBiases, key=itemBiases.get), max(itemBiases.values())))
-print("min user: %s , min value: %f" % (min(userBiases, key=userBiases.get), min(userBiases.values())))
-print("min recipe: %s , min value: %f" % (min(itemBiases, key=itemBiases.get), min(itemBiases.values())))
-
-lambdaExpList = range(-7,2)
-for exp in lambdaExpList:
+# lambdaExpList = range(-7,2)
+# for exp in lambdaExpList:
     # Train the model
-    l = pow(10, exp)
-    scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, l))
+l = pow(10, -5)
+scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, l), maxiter=100)
 
-    # Predict from the model
-    predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
-    labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
-    mse = MSE(predictions, labelsValid)
-    print("Lambda: %.10f, MSE of validation set = %f" % (l, mse))
-    # writeOutTestSetPred(l)
+# Predict from the model
+predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
+labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
+mse = MSE(predictions, labelsValid)
+print("Lambda: %.10f, MSE of validation set = %f" % (l, mse))
 
-    stream = open("predictions_Rating" + str(l) + ".txt", 'w')
-    for l in tqdm(open("data/stub_Rated.txt")):
-        if l.startswith("user_id"):
-            #header
-            stream.write(l)
-            continue
-        str_u, str_i = l.strip().split('-')
-        u, i = int(str_u), int(str_i)
-        stream.write(str_u + '-' + str_i + ',' + str(prediction(u, i)) + '\n')
-    stream.close()
+stream = open("predictions_Rating" + str(l) + ".txt", 'w')
+for l in tqdm(open("data/stub_Rated.txt")):
+    if l.startswith("user_id"):
+        stream.write(l)
+        continue
+    str_u, str_i = l.strip().split('-')
+    u, i = int(str_u), int(str_i)
+    stream.write(str_u + '-' + str_i + ',' + str(prediction(u, i)) + '\n')
+stream.close()
