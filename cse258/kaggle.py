@@ -45,18 +45,18 @@ def sampleNegative(data, train, valid):
 # print("Start saving")
 # validFrame = pd.DataFrame(valid)
 # validFrame.to_csv('valid.csv')
-# print("Start loading...")
-# valid = pd.read_csv('valid.csv')
-# print(valid)
-# print('Training ...')
-# recipeCount = defaultdict(int)
-# totalCooked = 0
-# for user, recipe in tqdm(train.iterrows()):
-#     recipeCount[recipe['recipe_id']] += 1
-#     totalCooked += 1
-# mostPopular = [(recipeCount[x], x) for x in recipeCount]
-# mostPopular.sort()
-# mostPopular.reverse()
+print("Start loading...")
+valid = pd.read_csv('valid.csv')
+print(valid)
+print('Training ...')
+recipeCount = defaultdict(int)
+totalCooked = 0
+for user, recipe in tqdm(train.iterrows()):
+    recipeCount[recipe['recipe_id']] += 1
+    totalCooked += 1
+mostPopular = [(recipeCount[x], x) for x in recipeCount]
+mostPopular.sort()
+mostPopular.reverse()
 
 def baselineOnValidation():
     random.seed(5583)
@@ -80,14 +80,14 @@ def baselineOnValidation():
     print('Accuracy on Validation set is %.3f' % (correct / len(valid)))
 
 
-# baselineOnValidation()
+baselineOnValidation()
 
 # Task 2
 def baselineOnValidationThreshold():
     random.seed(5583)
 
     acc = []
-    thresholds = list(range(1, 11))
+    thresholds = [1 + (1 / 2 ** i) for i in range(1, 11)]
 
     for threshold in thresholds:
         return1 = set()
@@ -105,7 +105,7 @@ def baselineOnValidationThreshold():
             else:
                 correct += (row['date'] == 0)
 
-        print('Evaluating on threshold %d ...' % threshold)
+        print('Evaluating on threshold %.3f ...' % threshold)
         acc.append(correct / len(valid))
 
     plt.plot(thresholds, acc, 'b-')
@@ -114,11 +114,11 @@ def baselineOnValidationThreshold():
     plt.show()
     print('Evaluating ...')
     print('max accuracy is ', max(acc))
-#
-#
-# baselineOnValidationThreshold()
-#
-#
+
+
+baselineOnValidationThreshold()
+
+
 #Task 3
 def Jaccard(s1, s2):
     numer = len(s1.intersection(s2))
@@ -135,35 +135,35 @@ for index, row in tqdm(train.iterrows()):
 
 thresholds = [1 / 2 ** i for i in range(1, 11)]
 acc = []
-# for threshold in thresholds:
-#     print('Evaluating on threshold %.3f ...' % threshold)
-#     correct = 0
-#     for index, row in tqdm(valid.iterrows()):
-#         userR = userRecipe[row['user_id']]
-#         jac = []
-#         m = -1
-#         for recipe in userR:
-#             if row['recipe_id'] not in recipeUser:
-#                 m = max(0, m)
-#             else:
-#                 m = max(Jaccard(recipeUser[row['recipe_id']], recipeUser[recipe]), m)
-#                 # jac.append(Jaccard(recipeUser[row['recipe_id']], recipeUser[recipe]))
-#
-#         if m > threshold:
-#             correct += (row['date'] != 0)
-#         else:
-#             correct += (row['date'] == 0)
-#
-#     print('Evaluating on threshold %d ...' % threshold)
-#     acc.append(correct / len(valid))
-#
-# plt.plot(thresholds, acc, 'b-')
-# plt.xlabel('Threshold')
-# plt.ylabel('Accuracy on Validation Set for different thresholds')
-# plt.show()
-# print('Evaluating ...')
-#
-# print('threshold %.3f, accuracy %.3f' % (thresholds[acc.index(max(acc))], max(acc)))
+for threshold in thresholds:
+    print('Evaluating on threshold %.3f ...' % threshold)
+    correct = 0
+    for index, row in tqdm(valid.iterrows()):
+        userR = userRecipe[row['user_id']]
+        jac = []
+        m = -1
+        for recipe in userR:
+            if row['recipe_id'] not in recipeUser:
+                m = max(0, m)
+            else:
+                m = max(Jaccard(recipeUser[row['recipe_id']], recipeUser[recipe]), m)
+                # jac.append(Jaccard(recipeUser[row['recipe_id']], recipeUser[recipe]))
+
+        if m > threshold:
+            correct += (row['date'] != 0)
+        else:
+            correct += (row['date'] == 0)
+
+    print('Evaluating on threshold %d ...' % threshold)
+    acc.append(correct / len(valid))
+
+plt.plot(thresholds, acc, 'b-')
+plt.xlabel('Threshold')
+plt.ylabel('Accuracy on Validation Set for different thresholds')
+plt.show()
+print('Evaluating ...')
+
+print('threshold %.3f, accuracy %.3f' % (thresholds[acc.index(max(acc))], max(acc)))
 
 #Task 4
 def ensemble():
@@ -182,7 +182,7 @@ def ensemble():
         for ic, i in mostPopular:
             count += ic
             return1.add(i)
-            if count > totalCooked / 2:
+            if count > totalCooked / 1.25:
                 break
 
         if m > 0.1 or row['recipe_id'] in return1:
@@ -192,7 +192,7 @@ def ensemble():
 
     return correct / len(valid)
 
-# print('accuracy %.3f' % ensemble())
+print('accuracy %.3f' % ensemble())
 
 
 #Task 5
@@ -236,7 +236,7 @@ import scipy.optimize
 import numpy as np
 lamb = 1
 data, train, valid = splitDataset("data/trainInteractions.csv.gz")
-
+train = data
 ratingMean = train['rating'].mean()
 alpha = ratingMean
 
@@ -252,7 +252,10 @@ nItems = len(items)
 
 
 def prediction(user, item):
-    return alpha + userBiases[user] + itemBiases[item]
+    if user in userBiases and item in itemBiases:
+        return alpha + userBiases[user] + itemBiases[item]
+    else:
+        return alpha
 
 
 def MSE(predictions, labels):
@@ -280,6 +283,7 @@ def cost(theta, labels, lamb):
         cost += lamb*itemBiases[i]**2
     return cost
 
+
 def derivative(theta, labels, lamb):
     unpack(theta)
     N = len(train)
@@ -289,6 +293,7 @@ def derivative(theta, labels, lamb):
     for index, d in tqdm(train.iterrows()):
         u, i = d['user_id'], d['recipe_id']
         pred = prediction(u, i)
+        print(d['rating'])
         diff = pred - d['rating']
         dalpha += 2/N*diff
         dUserBiases[u] += 2/N*diff
@@ -302,24 +307,22 @@ def derivative(theta, labels, lamb):
 
 
 scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems),
-                             derivative, args = (labels, lamb))
-print(userBiases)
+                             derivative, args = (labels, lamb), maxiter=100)
 
 predictions = []
 for index, d in valid.iterrows():
     u, i = d['user_id'], d['recipe_id']
-    if u in userBiases and i in itemBiases:
-        predictions.append(prediction(u, i))
-    else:
-        predictions.append(0)
+    predictions.append(prediction(u, i))
 
 print("MSE %.3f" % MSE(predictions, valid['rating']))
 
-# print("max user: %s , max value: %f" % (max(userBiases, key=userBiases.get), max(userBiases.values())))
-# print("max recipe: %s , max value: %f" % (max(itemBiases, key=itemBiases.get), max(itemBiases.values())))
-# print("min user: %s , min value: %f" % (min(userBiases, key=userBiases.get), min(userBiases.values())))
-# print("min recipe: %s , min value: %f" % (min(itemBiases, key=itemBiases.get), min(itemBiases.values())))
+#Task 7
+print("max user: %s , max value: %f" % (max(userBiases, key=userBiases.get), max(userBiases.values())))
+print("max recipe: %s , max value: %f" % (max(itemBiases, key=itemBiases.get), max(itemBiases.values())))
+print("min user: %s , min value: %f" % (min(userBiases, key=userBiases.get), min(userBiases.values())))
+print("min recipe: %s , min value: %f" % (min(itemBiases, key=itemBiases.get), min(itemBiases.values())))
 
+#Task 8
 lamb = 10**(-5)
 
 def training(lamb):
@@ -332,27 +335,15 @@ predictions = []
 for index, d in valid.iterrows():
     u, i = d['user_id'], d['recipe_id']
     predictions.append(prediction(u, i))
-    if u in userBiases and i in itemBiases:
-        predictions.append(prediction(u, i))
-    else:
-        predictions.append(0)
-        #     if u in userAverage:
-#         predictions.write(u + '-' + i + ',' + str(userAverage[u]) + '\n')
-#     else:
-#         predictions.write(u + '-' + i + ',' + str(globalAverage) + '\n')
-print(predictions)
+
 print("MSE %.3f" % MSE(predictions, valid['rating']))
 
-predictions = open("predictions_Rating.txt", 'w')
+stream = open("predictions_Rating.txt", 'w')
 for l in tqdm(open("data/stub_Rated.txt")):
     if l.startswith("user_id"):
         #header
-        predictions.write(l)
+        stream.write(l)
         continue
-    u, i = l.strip().split('-')
-    if u in userBiases and i in itemBiases:
-        predictions.write(u + '-' + i + ',' + str(prediction(u, i)) + '\n')
-    else:
-        predictions.write(u + '-' + i + ',' + str(0) + '\n')
-
-predictions.close()
+    str_u, str_i = l.strip().split('-')
+    u, i = int(str_u), int(str_i)
+    stream.write(str_u + '-' + str_i + ',' + str(prediction(u, i)) + '\n')

@@ -1,5 +1,6 @@
 import collections
 import warnings
+from ast import literal_eval
 from statistics import mean
 
 warnings.filterwarnings("ignore")
@@ -18,46 +19,20 @@ import scipy.optimize
 def splitDataset(datapath):
     f = gzip.open(datapath, 'rt')
     data = pd.read_csv(f)
-    train, valid = data[:400000], data[400001:]
+    train, valid = data, data[400001:]
     return data, train, valid
 
 
 data, train, valid = splitDataset("data/trainInteractions.csv.gz")
+
 
 def readCSV(path):
     f = gzip.open(path, 'rt')
     c = csv.reader(f)
     header = next(c)
     for l in c:
-        d = dict(zip(header,l))
-        yield d['user_id'],d['recipe_id'],d
-
-# allRatings = []
-# userRatings = defaultdict(list)
-#
-# for user, recipe, d in readCSV("data/trainInteractions.csv.gz"):
-#     r = int(d['rating'])
-#     allRatings.append(r)
-#     userRatings[user].append(r)
-#
-# globalAverage = sum(allRatings) / len(allRatings)
-# userAverage = {}
-# for u in userRatings:
-#     userAverage[u] = sum(userRatings[u]) / len(userRatings[u])
-#
-# predictions = open("data/predictions_Rated.txt", 'w')
-# for l in open("data/stub_Rated.txt"):
-#     if l.startswith("user_id"):
-#         #header
-#         predictions.write(l)
-#         continue
-#     u,i = l.strip().split('-')
-#     if u in userAverage:
-#         predictions.write(u + '-' + i + ',' + str(userAverage[u]) + '\n')
-#     else:
-#         predictions.write(u + '-' + i + ',' + str(globalAverage) + '\n')
-#
-# predictions.close()
+        d = dict(zip(header, l))
+        yield d['user_id'], d['recipe_id'], d
 
 
 #course method
@@ -72,7 +47,6 @@ for index, row in tqdm(train.iterrows()):
 ratingMean = 4.5808
 alpha = ratingMean
 
-
 N = len(train)
 nUsers = len(reviewsPerUser)
 nItems = len(reviewsPerItem)
@@ -80,6 +54,26 @@ users = list(reviewsPerUser.keys())
 items = list(reviewsPerItem.keys())
 userBiases = defaultdict(float)
 itemBiases = defaultdict(float)
+
+print("Start loading...")
+parameter = pd.read_csv('100_new.csv')
+
+l = []
+for index, k in parameter.iterrows():
+    if index == 0:
+        l.append(k['0'])
+    else:
+        l.append(literal_eval(k['0']))
+
+s = []
+alpha = float(l[0])
+print(alpha)
+for t in users:
+    userBiases[t] = l[1][t]
+    s.append(l[1][t])
+for t in items:
+    itemBiases[t] = l[2][t]
+    s.append(l[2][t])
 
 
 def MSE(predictions, labels):
@@ -94,8 +88,13 @@ def prediction(user, item):
         userBias = userBiases[user]
     if item in itemBiases:
         itemBias = itemBiases[item]
-
-    return alpha + userBias + itemBias
+    if alpha + userBias + itemBias > 5:
+        return 4.915
+    elif alpha + userBias + itemBias < 0:
+        return 0
+    else:
+        # return round(alpha + userBias + itemBias, 7)
+        return alpha + userBias + itemBias
 
 
 def unpack(theta):
@@ -111,7 +110,7 @@ def cost(theta, labels, lamb):
     unpack(theta)
     predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(train.iterrows())]
     cost = MSE(predictions, labels)
-    print("MSE = " + str(cost))
+    print("Training MSE = " + str(cost))
     for u in userBiases:
         cost += lamb*userBiases[u]**2
     for i in itemBiases:
@@ -121,6 +120,7 @@ def cost(theta, labels, lamb):
 
 def derivative(theta, labels, lamb):
     unpack(theta)
+    print(alpha)
     N = len(train)
     dalpha = 0
     dUserBiases = defaultdict(float)
@@ -140,41 +140,29 @@ def derivative(theta, labels, lamb):
 
 
 # alwaysPredictMean = [ratingMean for d in train.iterrows()]
-alwaysPredictMeanTrain = [ratingMean]*400000
+alwaysPredictMeanTrain = [ratingMean]*500000
 alwaysPredictMeanValid = [ratingMean]*100000
 
 
 labels = [row['rating'] for index, row in tqdm(train.iterrows())]
 
-# print(MSE(alwaysPredictMeanTrain, labels))
-# 0.8987313599958769
 
-# scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, 1))
-#
-# predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
-#
-# labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
-#
-# print(MSE(predictions, labelsValid))
-#
-# print("max user: %s , max value: %f" % (max(userBiases, key=userBiases.get), max(userBiases.values())))
-# print("max recipe: %s , max value: %f" % (max(itemBiases, key=itemBiases.get), max(itemBiases.values())))
-# print("min user: %s , min value: %f" % (min(userBiases, key=userBiases.get), min(userBiases.values())))
-# print("min recipe: %s , min value: %f" % (min(itemBiases, key=itemBiases.get), min(itemBiases.values())))
-
-# lambdaExpList = range(-7,2)
-# for exp in lambdaExpList:
-    # Train the model
-l = pow(10, -5)
-scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, l), maxiter=100)
-
+num = pow(10, -5) * 0.8
+scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + [0.0]*(nUsers+nItems), derivative, args = (labels, num), maxiter=100)
+# scipy.optimize.fmin_l_bfgs_b(cost, [alpha] + s, derivative, args = (labels, num), maxiter=1)
 # Predict from the model
-predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
-labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
-mse = MSE(predictions, labelsValid)
-print("Lambda: %.10f, MSE of validation set = %f" % (l, mse))
+# predictions = [prediction(row['user_id'], row['recipe_id']) for index, row in tqdm(valid.iterrows())]
+# labelsValid = [row['rating'] for index, row in tqdm(valid.iterrows())]
+# mse = MSE(predictions, labelsValid)
+# print("Lambda: %.10f, MSE of validation set = %f" % (num, mse))
 
-stream = open("predictions_Rating" + str(l) + ".txt", 'w')
+print("Sampling negative examples")
+valid = [alpha, userBiases, itemBiases]
+print("Start saving")
+validFrame = pd.DataFrame(valid)
+validFrame.to_csv('parameter.csv')
+
+stream = open("predictions_Rating" + str(num) + ".txt", 'w')
 for l in tqdm(open("data/stub_Rated.txt")):
     if l.startswith("user_id"):
         stream.write(l)
