@@ -216,7 +216,7 @@ def ensemble_kaggle():
         for ic, i in mostPopular:
             count += ic
             return1.add(i)
-            if count > totalCooked / 2:
+            if count > totalCooked / 1.2:
                 break
 
         if m > 0.001 or int(r) in return1:

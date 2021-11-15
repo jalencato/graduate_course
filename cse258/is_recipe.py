@@ -23,30 +23,10 @@ data, train, valid = splitDataset("data/trainInteractions.csv.gz")
 
 
 # Task 1
-def sampleNegative(data, train, valid):
-    NegValid, userRecipe = valid, {}
-    print("Preprocessing Data userRecipe ...")
-
-    for index, row in tqdm(data.iterrows()):
-        if row['user_id'] not in userRecipe:
-            userRecipe[row['user_id']] = {row['recipe_id']}
-        else:
-            userRecipe[row['user_id']].add(row['recipe_id'])
-
-    print("confirm loading training data")
-    for index, row in tqdm(valid.iterrows()):
-        negValidRecipe = random.sample(set(data['recipe_id']).difference(userRecipe[row['user_id']]), 1)[0]
-        NegValid = NegValid.append({'user_id': row['user_id'], 'recipe_id': negValidRecipe, 'date': 0, 'rating': -1},
-                                   ignore_index=True)
-
-    return NegValid, userRecipe
-
-
 recipeCount = defaultdict(int)
 totalCooked = 0
 for index, row in tqdm(train.iterrows()):
     recipeCount[row['recipe_id']] += row['rating']
-    # recipeCount[row['recipe_id']] += 1
     totalCooked += row['rating']
 mostPopular = [(recipeCount[x], x) for x in recipeCount]
 mostPopular.sort()
@@ -117,11 +97,14 @@ for d in test_dataset:
 return1 = set()
 count = 0
 
+print(totalCooked*0.6315)
+print(totalCooked*0.6325)
+
 for ic, i in mostPopular:
     count += ic
     return1.add(i)
     # if count > totalCooked * 0.6455:
-    if count > totalCooked*0.628:
+    if count > totalCooked*0.6345:
         break
 #Task 5
 predictions = open("kaggle.txt", 'w')
@@ -131,6 +114,8 @@ thresohold_down = -1
 def ensemble_kaggle():
     for l in tqdm(open("data/stub_Made.txt")):
         u, r = l.strip().split('-')
+        if u == 'user_id':
+            continue
         userR = userRecipe[int(u)]
         m = 0
         # method 1
