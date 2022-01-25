@@ -78,7 +78,7 @@ def ensemble_kaggle():
             continue
         if u == u0 and r == r0:
             print("hahaha")
-        if cnt < 9867:
+        if cnt < 5576:
             cnt += 1
             if [u, r] in pos_pair:
                 predictions.write(u + '-' + r + ",0\n")
