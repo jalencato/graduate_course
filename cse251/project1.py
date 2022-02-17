@@ -46,20 +46,20 @@ print(len(X_train))
 #     prototype[i] /= size[i]
 
 # primitive
-# X_train1, y_train1 = [], []
+X_train1, y_train1 = [], []
 cnt, m = 0, 10000
-# count_num = [0] * 10
-# print("start loop")
-# for i, d in tqdm(enumerate(X_train)):
-#     target = int(y_train[i])
-#     if count_num[target] >= m:
-#         continue
-#     X_train1.append(d)
-#     y_train1.append(y_train[i])
-#     count_num[target] += 1
-# X_train1 = np.array(X_train1)
-# y_train1 = np.array(y_train1)
-# print("ending loop")
+count_num = [0] * 10
+print("start loop")
+for i, d in tqdm(enumerate(X_train)):
+    target = int(y_train[i])
+    if count_num[target] >= m:
+        continue
+    X_train1.append(d)
+    y_train1.append(y_train[i])
+    count_num[target] += 1
+X_train1 = np.array(X_train1)
+y_train1 = np.array(y_train1)
+print("ending loop")
 
 
 # #select by kmeans
@@ -70,18 +70,18 @@ for i, d in tqdm(enumerate(X_train)):
 for i in range(10):
     label_arr[i] = np.array(label_arr[i])
 #
-# import os
-# os.environ['OMP_NUM_THREADS']="1"
-# X_train2, y_train2 = [], []
-# for i in range(10):
-#     kmeans_tmp = KMeans(n_clusters=m, init='k-means++', random_state=0).fit(label_arr[i])
-#     sample_tmp = kmeans_tmp.cluster_centers_
-#     for j in tqdm(range(len(sample_tmp))):
-#         X_train2.append(sample_tmp[j])
-#         y_train2.append(str(i))
-#
-# X_train2 = np.array(X_train2)
-# y_train2 = np.array(y_train2)
+import os
+os.environ['OMP_NUM_THREADS']="1"
+X_train2, y_train2 = [], []
+for i in range(10):
+    kmeans_tmp = KMeans(n_clusters=m, init='k-means++', random_state=0).fit(label_arr[i])
+    sample_tmp = kmeans_tmp.cluster_centers_
+    for j in tqdm(range(len(sample_tmp))):
+        X_train2.append(sample_tmp[j])
+        y_train2.append(str(i))
+
+X_train2 = np.array(X_train2)
+y_train2 = np.array(y_train2)
 #
 #
 # #use knn to select subset
