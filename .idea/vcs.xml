@@ -2,5 +2,16 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/go-lang-https-self-signed" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/grpc-go" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/p2-jalencato" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/p3-jalencato" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/p4-jalencato" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/p5-jalencato" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse224/proj4" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse231/final/chocopy-wasm-compiler-B" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse231/pa1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse231/pa2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cse260/hw1-pa1-r1ma-yazhong" vcs="Git" />
   </component>
 </project>
